@@ -37,7 +37,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.anpmech.launcher.activities.SharedLauncherPrefs;
 import com.anpmech.launcher.comparators.AlphabeticalOrder;
-import com.anpmech.launcher.comparators.PinToTop;
+import com.anpmech.launcher.comparators.PriorityOrder;
 import com.anpmech.launcher.comparators.RecentOrder;
 import com.anpmech.launcher.comparators.UsageOrder;
 import com.anpmech.launcher.threading.SimpleTaskConsumerManager;
@@ -68,7 +68,7 @@ public class LaunchableAdapter<T extends LaunchableActivity> extends BaseAdapter
      * This comparator orders {@link LaunchableActivity} objects with "pins" at the head of the
      * list.
      */
-    public static final Comparator<LaunchableActivity> PIN_TO_TOP = new PinToTop();
+    public static final Comparator<LaunchableActivity> PRIORITY_ORDER = new PriorityOrder();
 
     /**
      * This comparator orders {@link LaunchableActivity} objects in most recently used at the head
@@ -550,6 +550,7 @@ public class LaunchableAdapter<T extends LaunchableActivity> extends BaseAdapter
         final TextView appLabelView = view.findViewById(R.id.appLabel);
         final ImageView appIconView = view.findViewById(R.id.appIcon);
         final View appPinToTop = view.findViewById(R.id.appPinToTop);
+        final View appPinToBottom = view.findViewById(R.id.appPinToBottom);
 
         appLabelView.setText(label);
 
@@ -565,11 +566,8 @@ public class LaunchableAdapter<T extends LaunchableActivity> extends BaseAdapter
             }
         }
 
-        if (launchableActivity.getPriority() > 0) {
-            appPinToTop.setVisibility(View.VISIBLE);
-        } else {
-            appPinToTop.setVisibility(View.GONE);
-        }
+        appPinToTop.setVisibility(launchableActivity.getPriority() > 0 ? View.VISIBLE : View.GONE);
+        appPinToBottom.setVisibility(launchableActivity.getPriority() < 0 ? View.VISIBLE : View.GONE);
 
         return view;
     }
@@ -793,7 +791,7 @@ public class LaunchableAdapter<T extends LaunchableActivity> extends BaseAdapter
                 sort(USAGE);
             }
 
-            sort(PIN_TO_TOP);
+            sort(PRIORITY_ORDER);
 
             if (notify) {
                 notifyDataSetChanged();

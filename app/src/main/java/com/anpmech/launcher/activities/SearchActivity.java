@@ -404,22 +404,21 @@ public class SearchActivity extends Activity
 
     @Override
     public void onCreateContextMenu(final ContextMenu menu, final View v,
-            final ContextMenuInfo menuInfo) {
+                                    final ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
 
         final MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.app, menu);
 
         final LaunchableActivity activity = getLaunchableActivity(menuInfo);
-        final MenuItem item = menu.findItem(R.id.appmenu_pin_to_top);
 
         menu.setHeaderTitle(activity.toString());
 
-        if (activity.getPriority() == 0) {
-            item.setTitle(R.string.appmenu_pin_to_top);
-        } else {
-            item.setTitle(R.string.appmenu_remove_pin);
-        }
+        final MenuItem topItem = menu.findItem(R.id.appmenu_pin_to_top);
+        topItem.setTitle(activity.getPriority() > 0 ? R.string.appmenu_remove_pin : R.string.appmenu_pin_to_top);
+
+        final MenuItem bottomItem = menu.findItem(R.id.appmenu_pin_to_bottom);
+        bottomItem.setTitle(activity.getPriority() < 0 ? R.string.appmenu_remove_pin : R.string.appmenu_pin_to_bottom);
     }
 
     @Override
@@ -540,17 +539,13 @@ public class SearchActivity extends Activity
         final Editable searchText = mSearchEditText.getText();
 
         if (prefs.isKeyboardAutomatic() || searchText.length() > 0) {
-            final InputMethodManager imm =
-                    (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 
             // This is a special case to show SearchEditText should have focus.
             if (searchText.length() == 1 && searchText.charAt(0) == '\0') {
                 mSearchEditText.setText(null);
             }
 
-            mSearchEditText.requestFocus();
-            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-            imm.showSoftInput(mSearchEditText, 0);
+            showKeyboard();
         } else {
             hideKeyboard();
         }
@@ -559,6 +554,38 @@ public class SearchActivity extends Activity
         setupPadding();
         final Uri accUri = Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION);
         getContentResolver().registerContentObserver(accUri, false, mAccSettingObserver);
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+
+        final SharedLauncherPrefs prefs = new SharedLauncherPrefs(this);
+        if (prefs.isKeyboardAutomatic()) {
+            showKeyboard();
+
+            //HACK putting showKeyboard event to the end of the Ui Thread running queue
+            // to make sure the keyboard opens.
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showKeyboard();
+                }
+            });
+        } else {
+            hideKeyboard();
+        }
+
+
+    }
+
+    private void showKeyboard() {
+        final InputMethodManager imm =
+                (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+
+        mSearchEditText.requestFocus();
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        imm.showSoftInput(mSearchEditText, 0);
     }
 
     /**
@@ -662,18 +689,24 @@ public class SearchActivity extends Activity
 
     }
 
-    public void pinToTop(final MenuItem item) {
-        final LaunchableActivity activity = getLaunchableActivity(item);
+
+
+
+    private void updatePriority(LaunchableActivity activity, int priority) {
         final LaunchableActivityPrefs prefs = new LaunchableActivityPrefs(this);
 
-        if (activity.getPriority() == 0) {
-            activity.setPriority(1);
-        } else {
-            activity.setPriority(0);
-        }
+        activity.setPriority(activity.getPriority() != priority ? priority : 0);
 
         prefs.writePreference(activity);
         mAdapter.sortApps(this);
+    }
+
+    public void pinToTop(final MenuItem item) {
+        updatePriority(getLaunchableActivity(item), 1);
+    }
+
+    public void pinToBottom(final MenuItem item) {
+        updatePriority(getLaunchableActivity(item), -1);
     }
 
     /**

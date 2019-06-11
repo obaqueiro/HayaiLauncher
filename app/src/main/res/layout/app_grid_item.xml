@@ -33,6 +33,14 @@
         android:contentDescription="@string/appmenu_pin_to_top"
         android:src="@drawable/ic_star_yellow_18dp"
         android:visibility="gone" />
+    <ImageView
+        android:id="@+id/appPinToBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="18dp"
+        android:layout_gravity="end"
+        android:src="@drawable/ic_star_black_18dp"
+        android:visibility="gone"
+        android:contentDescription="@string/appmenu_pin_to_bottom" />
 
     <TextView
         android:id="@+id/appLabel"

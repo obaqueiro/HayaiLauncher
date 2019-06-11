@@ -29,6 +29,12 @@
         android:title="@string/appmenu_pin_to_top" />
 
     <item
+        android:id="@+id/appmenu_pin_to_bottom"
+        android:onClick="pinToBottom"
+        android:title="@string/appmenu_pin_to_bottom"
+        />
+
+    <item
         android:onClick="launchPlayStore"
         android:title="@string/appmenu_onplaystore" />
 </menu>
